@@ -1,0 +1,24 @@
+:root {
+  --background-color: #14161e;
+  --foreground-color: mintcream;
+
+  --primary-color: #facade;
+}
+
+* {
+  /* outline: 1px solid red; */
+}
+
+body {
+  margin: 0;
+  background: var(--background-color);
+  color: var(--foreground-color);
+}
+
+a {
+  color: var(--foreground-color);
+}
+
+a:hover {
+  color: var(--primary-color);
+}
