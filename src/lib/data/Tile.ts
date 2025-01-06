@@ -1,4 +1,6 @@
+import type { Player } from './Player';
+
 export type Tile = {
   id: string;
-  color: string;
+  owner: Player | null;
 };

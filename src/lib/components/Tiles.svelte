@@ -6,10 +6,12 @@
   const {
     tiles,
     size,
+    opacity = 1,
     offset = Position.ORIGIN,
   }: {
     tiles: PositionMap<Tile>;
     size: number;
+    opacity?: number;
     offset?: Position;
   } = $props();
 </script>
@@ -24,7 +26,7 @@
         bottom: {actualPosition.y * size}px;
         width: {size}px;
         height: {size}px;
-        background-color: {tile.color};
+        background-color: {tile.owner?.color ?? 'hsl(0, 0%, 20%)'};
       "
     ></div>
   {/each}
@@ -44,6 +46,8 @@
     transition-duration: 0.05s;
     transition-timing-function: ease-in;
 
-    outline: 1px solid white;
+    opacity: var(--opacity);
+    outline: var(--outline);
+    box-shadow: var(--box-shadow);
   }
 </style>

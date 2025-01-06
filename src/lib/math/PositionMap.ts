@@ -3,17 +3,12 @@ import { Position } from './Position';
 export class PositionMap<T> {
   readonly objects: Map<string, T> = new Map();
 
-  constructor(
-    private serialize: (p: Position) => string = JSON.stringify,
-    private deserialize: (key: string) => Position = JSON.parse,
-  ) {}
-
   key(p: Position): string {
-    return this.serialize(p);
+    return Position.serialize(p);
   }
 
   positions(): Position[] {
-    return Array.from(this.objects.keys()).map(this.deserialize);
+    return Array.from(this.objects.keys()).map(Position.deserialize);
   }
 
   values(): T[] {
@@ -22,7 +17,7 @@ export class PositionMap<T> {
 
   entries(): [Position, T][] {
     return Array.from(this.objects.entries()).map(([key, value]) => {
-      return [this.deserialize(key), value];
+      return [Position.deserialize(key), value];
     });
   }
 
@@ -71,12 +66,8 @@ export class PositionMap<T> {
     return min.add(max).divide(2);
   }
 
-  new(): PositionMap<T> {
-    return new PositionMap<T>(this.serialize, this.deserialize);
-  }
-
   mapPositions(block: (p: Position) => Position): PositionMap<T> {
-    const map = this.new();
+    const map = new PositionMap<T>();
     this.entries().forEach(([p, obj]) => map.set(block(p), obj));
     return map;
   }

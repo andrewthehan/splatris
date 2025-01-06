@@ -1,8 +1,7 @@
-import type { Block } from './Block';
 import { BoundingBox } from '../math/BoundingBox';
 import { Position } from '../math/Position';
 import { PositionMap } from '../math/PositionMap';
-import type { Tile } from './Tile';
+import type { Block } from './Block';
 
 const KICKS = [
   Position.ORIGIN,
@@ -26,9 +25,9 @@ function performRotation<T>(
   const rotatedBlock = block.tiles.mapPositions((position) => rotateFn(position, pivot));
 
   for (const kick of KICKS) {
-    const kickedBlock: PositionMap<Tile> = rotatedBlock.mapPositions((p) => p.add(kick));
+    const kickedBlock = rotatedBlock.mapPositions((p) => p.add(kick));
     if (validPositions.hasAll(kickedBlock.positions().map((p) => p.add(offset)))) {
-      return { tiles: kickedBlock };
+      return { ...block, tiles: kickedBlock };
     }
   }
 

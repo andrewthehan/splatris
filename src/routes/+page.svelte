@@ -1,33 +1,46 @@
 <script lang="ts">
   import CenterContainer from '$lib/components/CenterContainer.svelte';
   import Tiles from '$lib/components/Tiles.svelte';
-  import type { Block } from '$lib/data/Block';
-  import { Position } from '$lib/math/Position';
-  import { PositionMap } from '$lib/math/PositionMap';
+  import type { Block, BlockTile } from '$lib/data/Block';
+  import type { Player } from '$lib/data/Player';
   import { rotateClockwise, rotateCounterClockwise } from '$lib/data/Rotation';
   import { Tetrominoes, TetrominoShape } from '$lib/data/Tetrominoes';
   import type { Tile } from '$lib/data/Tile';
+  import { Position } from '$lib/math/Position';
+  import { PositionMap } from '$lib/math/PositionMap';
+  import { rollEven } from '$lib/math/Random';
   import { v4 as uuidv4 } from 'uuid';
-
-  const tiles = new PositionMap<Tile>(Position.serialize, Position.deserialize);
 
   const size = $state(70);
 
+  const tiles = $state(new PositionMap<Tile>());
+
+  const player: Player = $state({
+    name: 'Player',
+    color: 'hsl(0, 80%, 70%)',
+  });
+
+  const enemy: Player = $state({
+    name: 'Enemy',
+    color: 'hsl(180, 80%, 70%)',
+  });
+
   let block: Block = $state({
-    tiles: Tetrominoes[TetrominoShape.I].reduce(
-      (map, position, i) => {
-        map.set(position, { id: i.toString(), color: 'hsla(0, 0%, 0%, 60%)' });
-        return map;
-      },
-      new PositionMap<Tile>(Position.serialize, Position.deserialize),
-    ),
+    owner: player,
+    tiles: Tetrominoes[TetrominoShape.I].reduce((map, position, i) => {
+      map.set(position, {
+        id: i.toString(),
+        owner: player,
+      });
+      return map;
+    }, new PositionMap<BlockTile>()),
   });
 
   for (let x = 0; x < 6; x++) {
     for (let y = 0; y < 6; y++) {
       const tile = {
         id: uuidv4(),
-        color: `hsl(${(x * 6 + y) * 10}, 80%, 70%)`,
+        owner: rollEven([player, enemy, null]),
       };
       tiles.set(new Position(x, y), tile);
     }
@@ -35,7 +48,7 @@
 
   let offset = $state(tiles.center().floor());
 
-  function handleKeydown(event: KeyboardEvent) {
+  function controlBlock(event: KeyboardEvent) {
     switch (event.code) {
       case 'ArrowUp':
         if (tiles.hasAll(block.tiles.positions().map((p) => p.add(offset.up(1))))) {
@@ -67,19 +80,23 @@
         console.log(event.key);
     }
   }
-
-  $effect(() => {
-    window.addEventListener('keydown', handleKeydown);
-    return () => window.removeEventListener('keydown', handleKeydown);
-  });
 </script>
+
+<svelte:body onkeydown={controlBlock} />
 
 <section class="container">
   <section class="grid">
     <CenterContainer positions={tiles.positions()} {size}>
       {#snippet children(centerOffset)}
-        <Tiles {tiles} {size} offset={centerOffset} />
-        <Tiles tiles={block.tiles} {size} offset={centerOffset.add(offset)} />
+        <Tiles {tiles} {size} offset={centerOffset} --opacity={0.7} />
+        <Tiles
+          tiles={block.tiles}
+          {size}
+          offset={centerOffset.add(offset)}
+          --opacity={1}
+          --outline="1px solid white"
+          --box-shadow="0 0 6px 0 white, 0 0 6px 0 white inset"
+        />
       {/snippet}
     </CenterContainer>
   </section>
