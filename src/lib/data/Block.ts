@@ -1,4 +1,4 @@
-import type { PositionMap } from './PositionMap';
+import type { PositionMap } from '../math/PositionMap';
 import type { Tile } from './Tile';
 
 export type Block = {

@@ -2,8 +2,8 @@
   import CenterContainer from '$lib/components/CenterContainer.svelte';
   import Tiles from '$lib/components/Tiles.svelte';
   import type { Block } from '$lib/data/Block';
-  import { Position } from '$lib/data/Position';
-  import { PositionMap } from '$lib/data/PositionMap';
+  import { Position } from '$lib/math/Position';
+  import { PositionMap } from '$lib/math/PositionMap';
   import { rotateClockwise, rotateCounterClockwise } from '$lib/data/Rotation';
   import { Tetrominoes, TetrominoShape } from '$lib/data/Tetrominoes';
   import type { Tile } from '$lib/data/Tile';

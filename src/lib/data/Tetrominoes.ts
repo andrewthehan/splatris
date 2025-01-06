@@ -1,4 +1,4 @@
-import { Position } from './Position';
+import { Position } from '../math/Position';
 
 export enum TetrominoShape {
   I,

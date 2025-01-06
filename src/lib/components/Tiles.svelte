@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Position } from '$lib/data/Position';
-  import { PositionMap } from '$lib/data/PositionMap';
+  import { Position } from '$lib/math/Position';
+  import { PositionMap } from '$lib/math/PositionMap';
   import type { Tile } from '$lib/data/Tile';
 
   const {

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { BoundingBox } from '$lib/data/BoundingBox';
-  import { Position } from '$lib/data/Position';
+  import { BoundingBox } from '$lib/math/BoundingBox';
+  import { Position } from '$lib/math/Position';
   import type { Snippet } from 'svelte';
 
   const {

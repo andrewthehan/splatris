@@ -1,7 +1,7 @@
 import type { Block } from './Block';
-import { BoundingBox } from './BoundingBox';
-import { Position } from './Position';
-import { PositionMap } from './PositionMap';
+import { BoundingBox } from '../math/BoundingBox';
+import { Position } from '../math/Position';
+import { PositionMap } from '../math/PositionMap';
 import type { Tile } from './Tile';
 
 const KICKS = [
