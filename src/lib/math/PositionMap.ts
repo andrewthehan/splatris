@@ -21,8 +21,9 @@ export class PositionMap<T> {
     });
   }
 
-  set(p: Position, obj: T): void {
+  set(p: Position, obj: T): PositionMap<T> {
     this.objects.set(this.key(p), obj);
+    return this;
   }
 
   has(p: Position): boolean {

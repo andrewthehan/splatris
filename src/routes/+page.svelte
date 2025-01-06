@@ -2,7 +2,9 @@
   import CenterContainer from '$lib/components/CenterContainer.svelte';
   import Tiles from '$lib/components/Tiles.svelte';
   import type { Block, BlockTile } from '$lib/data/Block';
+  import { necessaryKick } from '$lib/data/Kick';
   import type { Player } from '$lib/data/Player';
+  import { RandomBagIterator } from '$lib/data/RandomBag';
   import { rotateClockwise, rotateCounterClockwise } from '$lib/data/Rotation';
   import { Tetrominoes, TetrominoShape } from '$lib/data/Tetrominoes';
   import type { Tile } from '$lib/data/Tile';
@@ -11,30 +13,38 @@
   import { rollEven } from '$lib/math/Random';
   import { v4 as uuidv4 } from 'uuid';
 
-  const size = $state(70);
+  const size = $state(100);
 
   const tiles = $state(new PositionMap<Tile>());
 
   const player: Player = $state({
     name: 'Player',
-    color: 'hsl(0, 80%, 70%)',
+    hue: 0,
   });
 
   const enemy: Player = $state({
     name: 'Enemy',
-    color: 'hsl(180, 80%, 70%)',
+    hue: 180,
   });
 
-  let block: Block = $state({
-    owner: player,
-    tiles: Tetrominoes[TetrominoShape.I].reduce((map, position, i) => {
-      map.set(position, {
-        id: i.toString(),
+  const blockBag = $state(
+    new RandomBagIterator<TetrominoShape, Block>(
+      Object.values(TetrominoShape) as TetrominoShape[],
+      (shape) => ({
         owner: player,
-      });
-      return map;
-    }, new PositionMap<BlockTile>()),
-  });
+        tiles: Tetrominoes[shape].reduce(
+          (map, position, i) =>
+            map.set(position, {
+              id: uuidv4(),
+              owner: player,
+            }),
+          new PositionMap<BlockTile>(),
+        ),
+      }),
+    ),
+  );
+
+  let block: Block = $state(blockBag.next());
 
   for (let x = 0; x < 6; x++) {
     for (let y = 0; y < 6; y++) {
@@ -71,14 +81,18 @@
         }
         break;
       case 'KeyZ':
-        block = rotateClockwise(block, offset, tiles);
+        block = rotateClockwise(block);
         break;
       case 'KeyX':
-        block = rotateCounterClockwise(block, offset, tiles);
+        block = rotateCounterClockwise(block);
+        break;
+      case 'Space':
+        block = blockBag.next();
         break;
       default:
         console.log(event.key);
     }
+    offset = offset.add(necessaryKick(block, offset, tiles));
   }
 </script>
 
@@ -88,14 +102,15 @@
   <section class="grid">
     <CenterContainer positions={tiles.positions()} {size}>
       {#snippet children(centerOffset)}
-        <Tiles {tiles} {size} offset={centerOffset} --opacity={0.7} />
+        <Tiles {tiles} {size} offset={centerOffset} />
         <Tiles
           tiles={block.tiles}
           {size}
+          fillPercent={0.8}
           offset={centerOffset.add(offset)}
-          --opacity={1}
-          --outline="1px solid white"
-          --box-shadow="0 0 6px 0 white, 0 0 6px 0 white inset"
+          --border-radius="3px"
+          --border="1px solid white"
+          --box-shadow="0 8px 16px black"
         />
       {/snippet}
     </CenterContainer>
