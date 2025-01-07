@@ -1,9 +1,8 @@
-import type { Player } from './Player';
 import { v4 as uuidv4 } from 'uuid';
 
 export type Tile = {
   readonly id: string;
-  owner: Player | null;
+  ownerId: string | undefined;
 };
 
 export function createTile(allFieldsExceptId: Omit<Tile, 'id'>): Tile {

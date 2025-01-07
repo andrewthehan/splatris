@@ -1,27 +1,21 @@
 <script lang="ts">
+  import type { Player } from '$lib/data/Player';
+  import { ORIGIN, add, type Position } from '$lib/data/Position';
+  import { PositionMapWrapper, type PositionMap } from '$lib/data/PositionMap';
   import type { Tile } from '$lib/data/Tile';
-  import { Position } from '$lib/math/Position';
-  import { PositionMap } from '$lib/math/PositionMap';
   import { flip } from 'svelte/animate';
-  import { quintOut } from 'svelte/easing';
-  import {
-    blur,
-    crossfade,
-    fade,
-    fly,
-    scale,
-    type CrossfadeParams,
-    type TransitionConfig,
-  } from 'svelte/transition';
+  import { type CrossfadeParams, type TransitionConfig } from 'svelte/transition';
 
   const {
     tiles,
+    players,
     size,
     transition,
     fillPercent = 1,
-    offset = Position.ORIGIN,
+    offset = ORIGIN,
   }: {
     tiles: PositionMap<Tile>;
+    players: Player[];
     size: number;
     transition: [
       (node: any, params: CrossfadeParams & { key: any }) => () => TransitionConfig,
@@ -33,8 +27,9 @@
 
   const [send, receive] = $derived(transition);
 
+  const tilesWrapper = $derived(new PositionMapWrapper(tiles));
   const sortedTiles = $derived(
-    tiles
+    tilesWrapper
       .entries()
       .toSorted(([positionA, tileA], [positionB, tileB]) => tileA.id.localeCompare(tileB.id)),
   );
@@ -42,7 +37,7 @@
 
 <div class="container">
   {#each sortedTiles as [position, tile] (tile.id)}
-    {@const actualPosition = position.add(offset)}
+    {@const actualPosition = add(position, offset)}
     <div
       class="cell"
       animate:flip
@@ -60,7 +55,9 @@
         style="
           width: {size * fillPercent}px;
           height: {size * fillPercent}px;
-          background: {tile.owner == null ? `hsl(0, 0%, 20%)` : `hsl(${tile.owner.hue}, 70%, 70%)`};
+          background: {tile.ownerId == null
+          ? `hsl(0, 0%, 20%)`
+          : `hsl(${players.find((p) => p.id === tile.ownerId)!!.hue}, 70%, 70%)`};
         "
       >
         <!-- {tile.id.substring(0, 4)} -->

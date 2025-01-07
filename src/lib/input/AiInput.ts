@@ -1,8 +1,8 @@
+import { PositionMapWrapper } from '$lib/data/PositionMap';
 import { type Tile } from '$lib/data/Tile';
-import { Position } from '$lib/math/Position';
-import { PositionMap } from '$lib/math/PositionMap';
 import { rollChance } from '$lib/math/Random';
-import { GamePlayer } from '../../routes/GamePlayer.svelte';
+import { PlayerController } from '../../routes/PlayerController';
+import { add, distanceTo, DOWN, LEFT, ORIGIN, RIGHT, UP, type Position } from '../data/Position';
 
 function findClosestPosition(
   positions: Position[],
@@ -10,73 +10,76 @@ function findClosestPosition(
 ): { position: Position; distance: number } {
   return haystack.reduce(
     (closest, position) => {
-      const distance = Math.min(...positions.map((p) => p.distanceTo(position)));
+      const distance = Math.min(...positions.map((p) => distanceTo(p, position)));
       return distance < closest.distance ? { position, distance } : closest;
     },
-    { position: Position.ORIGIN, distance: Infinity },
+    { position: ORIGIN, distance: Infinity },
   );
 }
 
-export function startAi(enemy: GamePlayer, tiles: PositionMap<Tile>) {
+export function startAi(controller: PlayerController, tiles: PositionMapWrapper<Tile>) {
   let movesSincePlacement = 0;
 
-  function enemyMove() {
-    const currentPositions = enemy.getPositions();
-    const shouldPlace = currentPositions.some((p) => tiles.get(p)?.owner?.id !== enemy.player.id);
+  function takeAction() {
+    const currentPositions = controller.getPositions();
+    const unowned = currentPositions.filter((p) => tiles.get(p)?.ownerId !== controller.player.id);
+    const owned = currentPositions.filter((p) => tiles.get(p)?.ownerId === controller.player.id);
+
+    const shouldPlace = movesSincePlacement > 10 || unowned.length > owned.length;
 
     if (shouldPlace) {
-      enemy.place();
+      controller.place();
       movesSincePlacement = 0;
       return;
     }
 
     if (movesSincePlacement > 3 && rollChance(0.2)) {
       if (rollChance(0.5)) {
-        enemy.rotateClockwise();
+        controller.rotateClockwise();
       } else {
-        enemy.rotateCounterClockwise();
+        controller.rotateCounterClockwise();
       }
       return;
     }
 
-    const directions = [Position.UP, Position.DOWN, Position.LEFT, Position.RIGHT];
-    if (rollChance(0.2)) {
-      enemy.move(directions[Math.floor(Math.random() * directions.length)]);
+    const directions = [UP, DOWN, LEFT, RIGHT];
+    if (rollChance(0.4)) {
+      controller.move(directions[Math.floor(Math.random() * directions.length)]);
       ++movesSincePlacement;
       return;
     }
 
     const targetPositions = tiles
       .entries()
-      .filter(([_, tile]) => tile.owner?.id !== enemy.player.id)
+      .filter(([_, tile]) => tile.ownerId !== controller.player.id)
       .map(([p, _]) => p);
 
     if (targetPositions.length > 0) {
       const { position: closestTarget } = findClosestPosition(
-        enemy.getPositions(),
+        controller.getPositions(),
         targetPositions,
       );
       const targetDirection = directions.reduce(
         (closest, direction) => {
           const { distance } = findClosestPosition(
             [closestTarget],
-            enemy.getPositions().map((p) => p.add(direction)),
+            controller.getPositions().map((p) => add(p, direction)),
           );
           return distance < closest.distance ? { direction, distance } : closest;
         },
-        { direction: Position.ORIGIN, distance: Infinity },
+        { direction: ORIGIN, distance: Infinity },
       ).direction;
 
-      enemy.move(targetDirection);
+      controller.move(targetDirection);
       ++movesSincePlacement;
     }
   }
 
-  function scheduleNextMove() {
+  function scheduleNextAction() {
     setTimeout(() => {
-      enemyMove();
-      scheduleNextMove();
+      takeAction();
+      scheduleNextAction();
     }, 200);
   }
-  scheduleNextMove();
+  scheduleNextAction();
 }

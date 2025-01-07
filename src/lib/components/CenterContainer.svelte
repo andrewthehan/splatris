@@ -1,6 +1,6 @@
 <script lang="ts">
+  import { divide, newPosition, type Position, subtract } from '$lib/data/Position';
   import { BoundingBox } from '$lib/math/BoundingBox';
-  import { Position } from '$lib/math/Position';
   import type { Snippet } from 'svelte';
 
   const {
@@ -19,7 +19,7 @@
   const { width, height } = $derived(container?.getBoundingClientRect() ?? { width: 0, height: 0 });
 
   const centerOffset = $derived(
-    new Position(width, height).divide(size).divide(2).subtract(box.center),
+    subtract(divide(divide(newPosition(width, height), size), 2), box.center),
   );
 </script>
 

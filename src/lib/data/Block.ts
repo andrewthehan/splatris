@@ -1,10 +1,6 @@
-import type { PositionMap } from '../math/PositionMap';
-import type { Player } from './Player';
+import type { PositionMap } from './PositionMap';
 import type { Tile } from './Tile';
 
 export type Block = {
-  owner: Player;
-  tiles: PositionMap<BlockTile>;
+  tiles: PositionMap<Tile>;
 };
-
-export type BlockTile = {} & Tile;

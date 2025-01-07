@@ -1,19 +1,19 @@
-import type { GamePlayer } from '../../routes/GamePlayer.svelte';
-import { Position } from '$lib/math/Position';
+import { DOWN, LEFT, RIGHT, UP } from '$lib/data/Position';
+import type { PlayerController } from '../../routes/PlayerController';
 
-export function keyboardControl(event: KeyboardEvent, player: GamePlayer) {
+export function keyboardControl(event: KeyboardEvent, player: PlayerController) {
   switch (event.code) {
     case 'ArrowUp':
-      player.move(Position.UP);
+      player.move(UP);
       break;
     case 'ArrowDown':
-      player.move(Position.DOWN);
+      player.move(DOWN);
       break;
     case 'ArrowLeft':
-      player.move(Position.LEFT);
+      player.move(LEFT);
       break;
     case 'ArrowRight':
-      player.move(Position.RIGHT);
+      player.move(RIGHT);
       break;
     case 'KeyZ':
       player.rotateClockwise();

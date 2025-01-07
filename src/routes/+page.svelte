@@ -1,96 +1,170 @@
 <script lang="ts">
   import CenterContainer from '$lib/components/CenterContainer.svelte';
   import Tiles from '$lib/components/Tiles.svelte';
-  import { createPlayer } from '$lib/data/Player';
+  import { createPlayer, type Player } from '$lib/data/Player';
+  import { add, floor, newPosition } from '$lib/data/Position';
+  import { PositionMapWrapper, type PositionMap } from '$lib/data/PositionMap';
   import type { Tile } from '$lib/data/Tile';
-  import { startAi } from '$lib/input/AiInput';
+  import { createBlockBag } from '$lib/game/Tetrominoes';
   import { keyboardControl } from '$lib/input/KeyboardInput';
-  import { Position } from '$lib/math/Position';
-  import { PositionMap } from '$lib/math/PositionMap';
-  import { onMount } from 'svelte';
-  import { SvelteMap } from 'svelte/reactivity';
-  import { crossfade } from 'svelte/transition';
+  import { Action } from '$lib/network/Action';
+  import { listenForConnections, listenForData, open, sendData } from '$lib/network/p2p';
+  import { getTransition } from '$lib/transitions/blockToTileTransition';
+  import Peer, { type DataConnection } from 'peerjs';
   import { v4 as uuidv4 } from 'uuid';
-  import { GamePlayer } from './GamePlayer.svelte';
+  import { PlayerController } from './PlayerController';
 
-  const cellSize = $state(80);
-  const gridSize = $state(8);
+  const peer = $state(new Peer());
+  let connection = $state<DataConnection>();
+  let peerId = $state(open(peer));
+  let peerIdToConnect = $state('');
 
-  let tiles = $state(new PositionMap<Tile>(() => new SvelteMap()));
-
-  const blockToTileTransition = crossfade({
-    duration: 200,
-    fallback(node, params) {
-      if (
-        players.some((player) =>
-          player.block.tiles.values().some((blockTile) => blockTile.id === (params as any).key),
-        )
-      ) {
-        return {
-          duration: 200,
-          css: (t) => `
-            transform: scale(${t});
-            opacity: ${t};
-          `,
-        };
-      }
-      return {
-        duration: 200,
-        css: (t) => `
-          opacity: ${t};
-          z-index: -1;
-        `,
-      };
-    },
+  $effect(() => {
+    (async function () {
+      makeConnection(await listenForConnections(peer));
+      startGame();
+      addPlayer(createPlayer({ hue: 180 }));
+    })();
   });
 
-  const players = $state<GamePlayer[]>([]);
+  function makeConnection(c: DataConnection) {
+    connection = c;
+    listenForData(connection, handleData);
+  }
 
-  onMount(() => {
+  function handleData(data: any) {
+    switch (data.type) {
+      case Action.START_GAME:
+        tiles = data.tiles;
+        addPlayer(createPlayer({ hue: 0 }));
+        break;
+      case Action.ADD_PLAYER:
+        players.push(data.player);
+        break;
+      case Action.UPDATE_PLAYER:
+        const index = players.findIndex((p) => p.id === data.player.id);
+        if (index !== -1) {
+          players[index] = data.player;
+        }
+        break;
+      case Action.UPDATE_TILES:
+        if (JSON.stringify(tiles) == JSON.stringify(data.tiles)) {
+          return;
+        }
+
+        tiles = data.tiles;
+        break;
+    }
+  }
+
+  const cellSize = $state(50);
+  const gridSize = $state(12);
+
+  let tiles = $state<PositionMap<Tile>>({});
+  const tilesWrapper = $derived(new PositionMapWrapper(tiles));
+
+  let players = $state<Player[]>([]);
+  let controlledPlayer = $state<Player | null>(null);
+
+  const blockBag = $derived(createBlockBag(controlledPlayer));
+  const controller = $derived(
+    controlledPlayer == null
+      ? null
+      : new PlayerController(controlledPlayer, blockBag, tiles, players),
+  );
+
+  const tileTransition = $derived(getTransition(players));
+
+  function startGame() {
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
-        const tile = {
+        const tile: Tile = {
           id: uuidv4(),
-          owner: null,
+          ownerId: undefined,
         };
-        tiles.set(new Position(x, y), tile);
+        tilesWrapper.set(newPosition(x, y), tile);
       }
     }
 
-    players.push(new GamePlayer(createPlayer({ hue: 0 }), tiles, players));
-    players.push(new GamePlayer(createPlayer({ hue: 120 }), tiles, players));
-    players.push(new GamePlayer(createPlayer({ hue: 240 }), tiles, players));
+    sendData(connection, {
+      type: Action.START_GAME,
+      tiles,
+    });
+  }
 
-    players.forEach((player) => (player.offset = tiles.center().floor()));
-    players.forEach((player) => (player.offset = tiles.center().floor()));
+  function addPlayer(player: Player) {
+    controlledPlayer = player;
+    controlledPlayer.block = blockBag.next();
+    controlledPlayer.offset = floor(tilesWrapper.center());
 
-    players.slice(1).forEach((player) => startAi(player, tiles));
+    players.push(controlledPlayer);
+    sendData(connection, {
+      type: Action.ADD_PLAYER,
+      player: controlledPlayer,
+    });
+  }
+
+  $effect(() => {
+    if (connection == null || controlledPlayer == null) return;
+
+    sendData(connection, {
+      type: Action.UPDATE_PLAYER,
+      player: controlledPlayer,
+    });
+  });
+
+  $effect(() => {
+    if (connection == null || tiles == null) return;
+
+    sendData(connection, {
+      type: Action.UPDATE_TILES,
+      tiles,
+    });
   });
 </script>
 
-<svelte:body onkeydown={(e) => keyboardControl(e, players[0])} />
+<svelte:body on:keydown={controller == null ? null : (e) => keyboardControl(e, controller)} />
 
-<section class="container">
-  <section class="grid">
-    <CenterContainer positions={tiles.positions()} size={cellSize}>
-      {#snippet children(centerOffset)}
-        <Tiles size={cellSize} {tiles} offset={centerOffset} transition={blockToTileTransition} />
-        {#each players as player}
+{#if connection == null}
+  <section class="connect">
+    {#await peerId}
+      <p class="peer-id">Connecting...</p>
+    {:then peerId}
+      <p class="peer-id">ID: {peerId}</p>
+      <input type="text" bind:value={peerIdToConnect} placeholder="Enter friend's ID to connect" />
+      <button onclick={() => makeConnection(peer.connect(peerIdToConnect))}>Connect</button>
+    {/await}
+  </section>
+{:else}
+  <section class="container">
+    <section class="grid">
+      <CenterContainer positions={tilesWrapper.positions()} size={cellSize}>
+        {#snippet children(centerOffset)}
           <Tiles
             size={cellSize}
-            tiles={player.block.tiles}
-            offset={centerOffset.add(player.offset)}
-            transition={blockToTileTransition}
-            fillPercent={0.8}
-            --border-radius="3px"
-            --border="1px solid white"
-            --box-shadow="0 8px 16px black"
+            {tiles}
+            {players}
+            offset={centerOffset}
+            transition={tileTransition}
           />
-        {/each}
-      {/snippet}
-    </CenterContainer>
+          {#each players as player}
+            <Tiles
+              size={cellSize}
+              tiles={player.block.tiles}
+              {players}
+              offset={add(centerOffset, player.offset)}
+              transition={tileTransition}
+              fillPercent={0.8}
+              --border-radius="3px"
+              --border="1px solid white"
+              --box-shadow="0 8px 16px black"
+            />
+          {/each}
+        {/snippet}
+      </CenterContainer>
+    </section>
   </section>
-</section>
+{/if}
 
 <style>
   .container {
@@ -103,5 +177,30 @@
 
   .grid {
     flex: 1;
+  }
+
+  .connect {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+
+  .connect .peer-id {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+
+  .connect input {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .connect button {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
   }
 </style>
