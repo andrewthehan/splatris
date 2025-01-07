@@ -1,7 +1,12 @@
+import { SvelteMap } from 'svelte/reactivity';
 import { Position } from './Position';
 
 export class PositionMap<T> {
-  readonly objects: Map<string, T> = new Map();
+  readonly objects: Map<string, T>;
+
+  constructor(private readonly mapCreator: () => Map<string, T> = () => new Map()) {
+    this.objects = mapCreator();
+  }
 
   key(p: Position): string {
     return Position.serialize(p);
@@ -68,7 +73,7 @@ export class PositionMap<T> {
   }
 
   mapPositions(block: (p: Position) => Position): PositionMap<T> {
-    const map = new PositionMap<T>();
+    const map = new PositionMap<T>(this.mapCreator);
     this.entries().forEach(([p, obj]) => map.set(block(p), obj));
     return map;
   }

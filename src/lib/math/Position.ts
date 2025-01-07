@@ -71,6 +71,10 @@ export class Position {
     return [this.up(1), this.down(1), this.left(1), this.right(1)];
   }
 
+  distanceTo(other: Position): number {
+    return Math.sqrt(Math.abs(this.x - other.x) ** 2 + Math.abs(this.y - other.y) ** 2);
+  }
+
   equals(other: Position): boolean {
     return this.x === other.x && this.y === other.y;
   }

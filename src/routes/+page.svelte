@@ -1,117 +1,92 @@
 <script lang="ts">
   import CenterContainer from '$lib/components/CenterContainer.svelte';
   import Tiles from '$lib/components/Tiles.svelte';
-  import type { Block, BlockTile } from '$lib/data/Block';
-  import { necessaryKick } from '$lib/data/Kick';
-  import type { Player } from '$lib/data/Player';
-  import { RandomBagIterator } from '$lib/data/RandomBag';
-  import { rotateClockwise, rotateCounterClockwise } from '$lib/data/Rotation';
-  import { Tetrominoes, TetrominoShape } from '$lib/data/Tetrominoes';
+  import { createPlayer } from '$lib/data/Player';
   import type { Tile } from '$lib/data/Tile';
+  import { startAi } from '$lib/input/AiInput';
+  import { keyboardControl } from '$lib/input/KeyboardInput';
   import { Position } from '$lib/math/Position';
   import { PositionMap } from '$lib/math/PositionMap';
-  import { rollEven } from '$lib/math/Random';
+  import { onMount } from 'svelte';
+  import { SvelteMap } from 'svelte/reactivity';
+  import { crossfade } from 'svelte/transition';
   import { v4 as uuidv4 } from 'uuid';
+  import { GamePlayer } from './GamePlayer.svelte';
 
-  const size = $state(100);
+  const cellSize = $state(80);
+  const gridSize = $state(8);
 
-  const tiles = $state(new PositionMap<Tile>());
+  let tiles = $state(new PositionMap<Tile>(() => new SvelteMap()));
 
-  const player: Player = $state({
-    name: 'Player',
-    hue: 0,
-  });
-
-  const enemy: Player = $state({
-    name: 'Enemy',
-    hue: 180,
-  });
-
-  const blockBag = $state(
-    new RandomBagIterator<TetrominoShape, Block>(
-      Object.values(TetrominoShape) as TetrominoShape[],
-      (shape) => ({
-        owner: player,
-        tiles: Tetrominoes[shape].reduce(
-          (map, position, i) =>
-            map.set(position, {
-              id: uuidv4(),
-              owner: player,
-            }),
-          new PositionMap<BlockTile>(),
-        ),
-      }),
-    ),
-  );
-
-  let block: Block = $state(blockBag.next());
-
-  for (let x = 0; x < 6; x++) {
-    for (let y = 0; y < 6; y++) {
-      const tile = {
-        id: uuidv4(),
-        owner: rollEven([player, enemy, null]),
+  const blockToTileTransition = crossfade({
+    duration: 200,
+    fallback(node, params) {
+      if (
+        players.some((player) =>
+          player.block.tiles.values().some((blockTile) => blockTile.id === (params as any).key),
+        )
+      ) {
+        return {
+          duration: 200,
+          css: (t) => `
+            transform: scale(${t});
+            opacity: ${t};
+          `,
+        };
+      }
+      return {
+        duration: 200,
+        css: (t) => `
+          opacity: ${t};
+          z-index: -1;
+        `,
       };
-      tiles.set(new Position(x, y), tile);
-    }
-  }
+    },
+  });
 
-  let offset = $state(tiles.center().floor());
+  const players = $state<GamePlayer[]>([]);
 
-  function controlBlock(event: KeyboardEvent) {
-    switch (event.code) {
-      case 'ArrowUp':
-        if (tiles.hasAll(block.tiles.positions().map((p) => p.add(offset.up(1))))) {
-          offset = offset.up(1);
-        }
-        break;
-      case 'ArrowDown':
-        if (tiles.hasAll(block.tiles.positions().map((p) => p.add(offset.down(1))))) {
-          offset = offset.down(1);
-        }
-        break;
-      case 'ArrowLeft':
-        if (tiles.hasAll(block.tiles.positions().map((p) => p.add(offset.left(1))))) {
-          offset = offset.left(1);
-        }
-        break;
-      case 'ArrowRight':
-        if (tiles.hasAll(block.tiles.positions().map((p) => p.add(offset.right(1))))) {
-          offset = offset.right(1);
-        }
-        break;
-      case 'KeyZ':
-        block = rotateClockwise(block);
-        break;
-      case 'KeyX':
-        block = rotateCounterClockwise(block);
-        break;
-      case 'Space':
-        block = blockBag.next();
-        break;
-      default:
-        console.log(event.key);
+  onMount(() => {
+    for (let x = 0; x < gridSize; x++) {
+      for (let y = 0; y < gridSize; y++) {
+        const tile = {
+          id: uuidv4(),
+          owner: null,
+        };
+        tiles.set(new Position(x, y), tile);
+      }
     }
-    offset = offset.add(necessaryKick(block, offset, tiles));
-  }
+
+    players.push(new GamePlayer(createPlayer({ hue: 0 }), tiles, players));
+    players.push(new GamePlayer(createPlayer({ hue: 120 }), tiles, players));
+    players.push(new GamePlayer(createPlayer({ hue: 240 }), tiles, players));
+
+    players.forEach((player) => (player.offset = tiles.center().floor()));
+    players.forEach((player) => (player.offset = tiles.center().floor()));
+
+    players.slice(1).forEach((player) => startAi(player, tiles));
+  });
 </script>
 
-<svelte:body onkeydown={controlBlock} />
+<svelte:body onkeydown={(e) => keyboardControl(e, players[0])} />
 
 <section class="container">
   <section class="grid">
-    <CenterContainer positions={tiles.positions()} {size}>
+    <CenterContainer positions={tiles.positions()} size={cellSize}>
       {#snippet children(centerOffset)}
-        <Tiles {tiles} {size} offset={centerOffset} />
-        <Tiles
-          tiles={block.tiles}
-          {size}
-          fillPercent={0.8}
-          offset={centerOffset.add(offset)}
-          --border-radius="3px"
-          --border="1px solid white"
-          --box-shadow="0 8px 16px black"
-        />
+        <Tiles size={cellSize} {tiles} offset={centerOffset} transition={blockToTileTransition} />
+        {#each players as player}
+          <Tiles
+            size={cellSize}
+            tiles={player.block.tiles}
+            offset={centerOffset.add(player.offset)}
+            transition={blockToTileTransition}
+            fillPercent={0.8}
+            --border-radius="3px"
+            --border="1px solid white"
+            --box-shadow="0 8px 16px black"
+          />
+        {/each}
       {/snippet}
     </CenterContainer>
   </section>

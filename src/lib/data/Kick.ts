@@ -8,7 +8,7 @@ export function necessaryKick<T>(
   block: Block,
   offset: Position,
   validPositions: PositionMap<T>,
-  maxDistance = 3,
+  maxDistance = 4,
 ): Position {
   if (validPositions.hasAll(block.tiles.positions().map((p) => p.add(offset)))) {
     return Position.ORIGIN;

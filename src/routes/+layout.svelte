@@ -10,9 +10,7 @@
 </svelte:head>
 
 <div class="root">
-  <header>
-    <a href="/"><h1>Tile</h1></a>
-  </header>
+  <header></header>
 
   <main>
     <div class="main-content">
