@@ -162,8 +162,11 @@
         {#snippet children(centerOffset)}
           <Tiles
             size={cellSize}
+            color={(tile) =>
+              tile.ownerId == null
+                ? `hsl(0, 0%, 90%)`
+                : `hsl(${players.find((p) => p.id === tile.ownerId)!!.hue}, 80%, 60%)`}
             {tiles}
-            {players}
             offset={centerOffset}
             transition={tileTransition}
             baseZIndex={0}
@@ -172,10 +175,13 @@
             <Tiles
               size={cellSize}
               tiles={player.block.tiles}
-              {players}
+              color={(tile) =>
+                tile.ownerId == null
+                  ? `hsl(0, 0%, 90%)`
+                  : `hsl(${players.find((p) => p.id === tile.ownerId)!!.hue}, 80%, 50%)`}
               offset={add(centerOffset, player.offset)}
               transition={tileTransition}
-              baseZIndex={1 + (player === controlledPlayer ? 2 : 0)}
+              baseZIndex={2 + (player === controlledPlayer ? 2 : 0)}
               fillPercent={0.7}
               --border-radius="4px"
               --border="4px solid white"

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { Player } from '$lib/data/Player';
   import { ORIGIN, add, type Position } from '$lib/data/Position';
   import { PositionMapWrapper, type PositionMap } from '$lib/data/PositionMap';
   import type { Tile } from '$lib/data/Tile';
@@ -8,7 +7,7 @@
 
   const {
     tiles,
-    players,
+    color,
     size,
     transition,
     baseZIndex = 0,
@@ -16,7 +15,7 @@
     offset = ORIGIN,
   }: {
     tiles: PositionMap<Tile>;
-    players: Player[];
+    color: (tile: Tile) => string;
     size: number;
     transition: [
       (node: any, params: CrossfadeParams & { key: any }) => () => TransitionConfig,
@@ -58,9 +57,7 @@
         style="
           width: {size * fillPercent}px;
           height: {size * fillPercent}px;
-          background: {tile.ownerId == null
-          ? `hsl(0, 0%, 90%)`
-          : `hsl(${players.find((p) => p.id === tile.ownerId)!!.hue}, 80%, 50%)`};
+          background: {color(tile)};
         "
       >
         <!-- {tile.id.substring(0, 4)} -->
