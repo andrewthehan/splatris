@@ -1,5 +1,5 @@
 import type { Block } from '$lib/data/Block';
-import { createPlayer, type Player } from '$lib/data/Player';
+import { type Player } from '$lib/data/Player';
 import { add, type Position } from '$lib/data/Position';
 import { PositionMapWrapper, type PositionMap } from '$lib/data/PositionMap';
 import type { Tile } from '$lib/data/Tile';
@@ -9,8 +9,6 @@ import { rotateClockwise, rotateCounterClockwise } from '$lib/game/Rotation';
 import { TetrominoShape } from '$lib/game/Tetrominoes';
 
 export class PlayerController {
-  private static readonly DEFAULT_PLAYER: Player = createPlayer({ hue: 0 });
-
   constructor(
     public player: Player,
     private blockBag: RandomBagIterator<TetrominoShape, Block>,

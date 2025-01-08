@@ -5,6 +5,7 @@
   import { add, floor, newPosition } from '$lib/data/Position';
   import { PositionMapWrapper, type PositionMap } from '$lib/data/PositionMap';
   import type { Tile } from '$lib/data/Tile';
+  import { PlayerController } from '$lib/game/PlayerController';
   import { createBlockBag } from '$lib/game/Tetrominoes';
   import { keyboardControl } from '$lib/input/KeyboardInput';
   import { Action } from '$lib/network/Action';
@@ -12,7 +13,6 @@
   import { getTransition } from '$lib/transitions/blockToTileTransition';
   import Peer, { type DataConnection } from 'peerjs';
   import { v4 as uuidv4 } from 'uuid';
-  import { PlayerController } from './PlayerController';
 
   const peer = $state(new Peer());
   let connection = $state<DataConnection>();
@@ -105,20 +105,20 @@
   }
 
   $effect(() => {
-    if (connection == null || controlledPlayer == null) return;
-
-    sendData(connection, {
-      type: Action.UPDATE_PLAYER,
-      player: controlledPlayer,
-    });
-  });
-
-  $effect(() => {
     if (connection == null || tiles == null) return;
 
     sendData(connection, {
       type: Action.UPDATE_TILES,
       tiles,
+    });
+  });
+
+  $effect(() => {
+    if (connection == null || controlledPlayer == null) return;
+
+    sendData(connection, {
+      type: Action.UPDATE_PLAYER,
+      player: controlledPlayer,
     });
   });
 </script>

@@ -1,5 +1,5 @@
 import { DOWN, LEFT, RIGHT, UP } from '$lib/data/Position';
-import type { PlayerController } from '../../routes/PlayerController';
+import type { PlayerController } from '../game/PlayerController';
 
 export function keyboardControl(event: KeyboardEvent, player: PlayerController) {
   switch (event.code) {

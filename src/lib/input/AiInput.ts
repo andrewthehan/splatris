@@ -1,7 +1,7 @@
 import { PositionMapWrapper } from '$lib/data/PositionMap';
 import { type Tile } from '$lib/data/Tile';
 import { rollChance } from '$lib/math/Random';
-import { PlayerController } from '../../routes/PlayerController';
+import { PlayerController } from '../game/PlayerController';
 import { add, distanceTo, DOWN, LEFT, ORIGIN, RIGHT, UP, type Position } from '../data/Position';
 
 function findClosestPosition(
