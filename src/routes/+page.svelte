@@ -4,7 +4,7 @@
   import { createPlayer, type Player } from '$lib/data/Player';
   import { add, floor, newPosition } from '$lib/data/Position';
   import { PositionMapWrapper, type PositionMap } from '$lib/data/PositionMap';
-  import type { Tile } from '$lib/data/Tile';
+  import { createTile, type Tile } from '$lib/data/Tile';
   import { PlayerController } from '$lib/game/PlayerController';
   import { createBlockBag } from '$lib/game/Tetrominoes';
   import { keyboardControl } from '$lib/input/KeyboardInput';
@@ -16,26 +16,34 @@
     type UpdatePlayerData,
     type UpdateTilesData,
   } from '$lib/network/Action';
-  import { listenForConnections, listenForData, open, sendData } from '$lib/network/p2p';
+  import { listenForConnections, listenForData, onClose, open, sendData } from '$lib/network/p2p';
   import { getTransition } from '$lib/transitions/blockToTileTransition';
   import Peer, { type DataConnection } from 'peerjs';
-  import { v4 as uuidv4 } from 'uuid';
+  import { onMount } from 'svelte';
 
   const peer = $state(new Peer());
   let connection = $state<DataConnection>();
   let peerId = $state(open(peer));
   let peerIdToConnect = $state('');
 
-  $effect(() => {
-    (async function () {
-      makeConnection(await listenForConnections(peer));
-      startGame();
-      addPlayer(createPlayer({ hue: 180 }));
-    })();
-  });
+  onMount(() => waitForConnect());
+
+  async function waitForConnect() {
+    makeConnection(await listenForConnections(peer));
+    startGame();
+    addPlayer(createPlayer({ hue: 180 }));
+  }
 
   function makeConnection(c: DataConnection) {
     connection = c;
+    onClose(connection, () => {
+      connection = undefined;
+      tilesWrapper.clear();
+      players.splice(0, players.length);
+      controlledPlayer = null;
+
+      waitForConnect();
+    });
     listenForData<ActionData>(connection, handleData);
   }
 
@@ -43,7 +51,7 @@
     switch (data.action) {
       case Action.START_GAME:
         const startGameData = data as StartGameData;
-        tiles = startGameData.tiles;
+        Object.assign(tiles, startGameData.tiles);
 
         addPlayer(createPlayer({ hue: 0 }));
         break;
@@ -68,10 +76,10 @@
   const cellSize = $state(50);
   const gridSize = $state(12);
 
-  let tiles = $state<PositionMap<Tile>>({});
+  const tiles = $state<PositionMap<Tile>>({});
   const tilesWrapper = $derived(new PositionMapWrapper(tiles));
 
-  let players = $state<Player[]>([]);
+  const players = $state<Player[]>([]);
   let controlledPlayer = $state<Player | null>(null);
 
   const blockBag = $derived(createBlockBag(controlledPlayer));
@@ -105,11 +113,12 @@
 
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
-        const tile: Tile = {
-          id: uuidv4(),
-          ownerId: undefined,
-        };
-        tilesWrapper.set(newPosition(x, y), tile);
+        tilesWrapper.set(
+          newPosition(x, y),
+          createTile({
+            ownerId: undefined,
+          }),
+        );
       }
     }
 

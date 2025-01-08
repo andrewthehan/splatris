@@ -6,6 +6,10 @@ export async function open(peer: Peer): Promise<string> {
   });
 }
 
+export function onClose(connection: DataConnection, handler: () => void) {
+  connection.on('close', handler);
+}
+
 export function listenForConnections(peer: Peer): Promise<DataConnection> {
   return new Promise((resolve) => {
     peer.on('connection', (connection) => connection.on('open', () => resolve(connection)));
