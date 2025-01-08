@@ -1,10 +1,12 @@
 import type { Player } from '$lib/data/Player';
 import { PositionMapWrapper } from '$lib/data/PositionMap';
+import { quadIn } from 'svelte/easing';
 import { crossfade } from 'svelte/transition';
 
 export function getTransition(players: Player[]) {
   return crossfade({
     duration: 200,
+    easing: quadIn,
     fallback(node, params) {
       if (
         players.some((player) =>
@@ -16,17 +18,17 @@ export function getTransition(players: Player[]) {
         return {
           duration: 200,
           css: (t) => `
-          transform: scale(${t});
-          opacity: ${t};
-        `,
+            transform: scale(${t});
+            opacity: ${t};
+          `,
         };
       }
       return {
         duration: 200,
         css: (t) => `
-        opacity: ${t};
-        z-index: -1;
-      `,
+          opacity: ${t};
+          z-index: -1;
+        `,
       };
     },
   });

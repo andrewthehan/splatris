@@ -11,6 +11,7 @@
     players,
     size,
     transition,
+    baseZIndex = 0,
     fillPercent = 1,
     offset = ORIGIN,
   }: {
@@ -21,6 +22,7 @@
       (node: any, params: CrossfadeParams & { key: any }) => () => TransitionConfig,
       (node: any, params: CrossfadeParams & { key: any }) => () => TransitionConfig,
     ];
+    baseZIndex?: number;
     fillPercent?: number;
     offset?: Position;
   } = $props();
@@ -46,6 +48,7 @@
         bottom: {actualPosition.y * size}px;
         width: {size}px;
         height: {size}px;
+        z-index: {baseZIndex - position.y};
       "
     >
       <div
@@ -56,8 +59,8 @@
           width: {size * fillPercent}px;
           height: {size * fillPercent}px;
           background: {tile.ownerId == null
-          ? `hsl(0, 0%, 20%)`
-          : `hsl(${players.find((p) => p.id === tile.ownerId)!!.hue}, 70%, 70%)`};
+          ? `hsl(0, 0%, 90%)`
+          : `hsl(${players.find((p) => p.id === tile.ownerId)!!.hue}, 80%, 50%)`};
         "
       >
         <!-- {tile.id.substring(0, 4)} -->

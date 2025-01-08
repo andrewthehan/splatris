@@ -31,7 +31,7 @@
   async function waitForConnect() {
     makeConnection(await listenForConnections(peer));
     startGame();
-    addPlayer(createPlayer({ hue: 180 }));
+    addPlayer(createPlayer({ hue: 240 }));
   }
 
   function makeConnection(c: DataConnection) {
@@ -166,6 +166,7 @@
             {players}
             offset={centerOffset}
             transition={tileTransition}
+            baseZIndex={0}
           />
           {#each players as player}
             <Tiles
@@ -174,10 +175,11 @@
               {players}
               offset={add(centerOffset, player.offset)}
               transition={tileTransition}
-              fillPercent={0.8}
-              --border-radius="3px"
-              --border="1px solid white"
-              --box-shadow="0 8px 16px black"
+              baseZIndex={1 + (player === controlledPlayer ? 2 : 0)}
+              fillPercent={0.7}
+              --border-radius="4px"
+              --border="4px solid white"
+              --box-shadow="0 0 2px 2px black"
             />
           {/each}
         {/snippet}
