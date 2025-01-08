@@ -20,6 +20,7 @@
   import { getTransition } from '$lib/transitions/blockToTileTransition';
   import Peer, { type DataConnection } from 'peerjs';
   import { onMount } from 'svelte';
+  import { flip } from 'svelte/animate';
 
   const peer = $state(new Peer());
   let connection = $state<DataConnection>();
@@ -141,6 +142,16 @@
       player: controlledPlayer,
     });
   }
+
+  const totalTiles = $derived(Object.keys(tiles).length);
+  const playerScores = $derived(
+    players
+      .map((player) => ({
+        player,
+        score: Object.values(tiles).filter((tile) => tile.ownerId === player.id).length,
+      }))
+      .sort((a, b) => b.score - a.score),
+  );
 </script>
 
 <svelte:body on:keydown={controller == null ? null : (e) => keyboardControl(e, controller)} />
@@ -157,6 +168,14 @@
   </section>
 {:else}
   <section class="container">
+    <section class="scoreboard">
+      {#each playerScores as { player, score } (player.id)}
+        <div class="score" animate:flip>
+          <span class="player" style="color: hsl({player.hue}, 80%, 50%)">{player.id}</span>: {score}
+          ({((score / totalTiles) * 100).toFixed(2)}%)
+        </div>
+      {/each}
+    </section>
     <section class="grid">
       <CenterContainer positions={tilesWrapper.positions()} size={cellSize}>
         {#snippet children(centerOffset)}
@@ -207,12 +226,28 @@
     flex: 1;
   }
 
+  .scoreboard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 1rem;
+  }
+
+  .score {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .player {
+    font-weight: bold;
+  }
+
   .connect {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
   }
 
   .connect .peer-id {
