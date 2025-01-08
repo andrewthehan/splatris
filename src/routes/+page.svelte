@@ -22,6 +22,7 @@
   import Peer, { type DataConnection } from 'peerjs';
   import { onMount } from 'svelte';
   import { flip } from 'svelte/animate';
+  import { SvelteSet } from 'svelte/reactivity';
 
   const peer = $state(new Peer());
   const peerId = $state(open(peer));
@@ -29,13 +30,19 @@
   let peerIdToConnect = $state('');
 
   let playerHue = $state(randomInt(0, 360));
+  let playerName = $state('');
 
   onMount(() => waitForConnect());
 
   async function waitForConnect() {
     makeConnection(await listenForConnections(peer));
     startGame();
-    addPlayer(createPlayer({ hue: playerHue }));
+    addPlayer(
+      createPlayer({
+        name: playerName.trim().length === 0 ? await peerId : playerName.trim(),
+        hue: playerHue,
+      }),
+    );
   }
 
   function makeConnection(c: DataConnection) {
@@ -51,13 +58,18 @@
     listenForData<ActionData>(connection, handleData);
   }
 
-  function handleData(data: ActionData) {
+  async function handleData(data: ActionData) {
     switch (data.action) {
       case Action.START_GAME:
         const startGameData = data as StartGameData;
         Object.assign(tiles, startGameData.tiles);
 
-        addPlayer(createPlayer({ hue: playerHue }));
+        addPlayer(
+          createPlayer({
+            name: playerName.trim().length === 0 ? await peerId : playerName.trim(),
+            hue: playerHue,
+          }),
+        );
         break;
       case Action.ADD_PLAYER:
         const addPlayerData = data as AddPlayerData;
@@ -155,15 +167,35 @@
       }))
       .sort((a, b) => b.score - a.score),
   );
+
+  const keysPressed = $state(new SvelteSet<string>());
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (controller == null) return;
+
+    if (keysPressed.has(event.code)) return;
+
+    if (keyboardControl(event, controller)) {
+      keysPressed.add(event.code);
+    }
+  }
+
+  function handleKeyUp(event: KeyboardEvent) {
+    keysPressed.delete(event.code);
+  }
 </script>
 
-<svelte:body on:keydown={controller == null ? null : (e) => keyboardControl(e, controller)} />
+<svelte:body on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
 
 {#if connection == null}
   <section class="connect">
     {#await peerId}
       <p class="peer-id">Connecting...</p>
     {:then peerId}
+      <div class="name-input">
+        <label for="name">Enter your name:</label>
+        <input type="text" id="name" bind:value={playerName} placeholder="Your name" />
+      </div>
       <div class="color-picker">
         <label for="hue">Choose your color:</label>
         <input type="range" id="hue" min="0" max="360" bind:value={playerHue} />
@@ -179,7 +211,7 @@
     <section class="scoreboard">
       {#each playerScores as { player, score } (player.id)}
         <div class="score" animate:flip>
-          <span class="player" style="color: hsl({player.hue}, 80%, 50%)">{player.id}</span>: {score}
+          <span class="player" style="color: hsl({player.hue}, 80%, 50%)">{player.name}</span>: {score}
           ({((score / totalTiles) * 100).toFixed(2)}%)
         </div>
       {/each}
@@ -217,6 +249,14 @@
           {/each}
         {/snippet}
       </CenterContainer>
+    </section>
+    <section class="keys-pressed">
+      <div class="keys">
+        {#each Array.from(keysPressed) as key}
+          <span class="key">{key}</span>
+        {/each}
+      </div>
+      <h3 class="keys-pressed-label">Keys Pressed</h3>
     </section>
   </section>
 {/if}
@@ -276,8 +316,10 @@
 
   .color-picker {
     display: flex;
+    flex-flow: row;
     justify-content: center;
     align-items: center;
+    margin-bottom: 1rem;
   }
 
   .color-picker label {
@@ -294,5 +336,55 @@
     width: 2rem;
     height: 2rem;
     border: 1px solid black;
+  }
+
+  .name-input {
+    display: flex;
+    flex-flow: row;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .name-input label {
+    margin-right: 1rem;
+  }
+
+  .name-input input[type='text'] {
+    padding: 0.5rem;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .keys-pressed {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 1rem;
+    border-radius: 0.5rem;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .keys-pressed-label {
+    margin: 0;
+    color: white;
+  }
+
+  .keys {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 15rem;
+  }
+
+  .key {
+    background: #333;
+    padding: 0.25rem 0.5rem;
+    margin: 0.25rem;
+    border-radius: 0.25rem;
   }
 </style>

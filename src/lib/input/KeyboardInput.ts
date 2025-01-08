@@ -1,7 +1,7 @@
 import { DOWN, LEFT, RIGHT, UP } from '$lib/data/Position';
 import type { PlayerController } from '../game/PlayerController';
 
-export function keyboardControl(event: KeyboardEvent, player: PlayerController) {
+export function keyboardControl(event: KeyboardEvent, player: PlayerController): boolean {
   switch (event.code) {
     case 'ArrowUp':
       player.move(UP);
@@ -24,5 +24,8 @@ export function keyboardControl(event: KeyboardEvent, player: PlayerController) 
     case 'Space':
       player.place();
       break;
+    default:
+      return false;
   }
+  return true;
 }

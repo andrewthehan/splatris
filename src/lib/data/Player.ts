@@ -4,10 +4,12 @@ import type { Block } from './Block';
 
 export type Player = {
   id: string;
+
+  name: string;
+  hue: number;
+
   block: Block;
   offset: Position;
-
-  hue: number;
 };
 
 export function createPlayer(
