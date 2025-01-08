@@ -8,3 +8,25 @@ export enum Action {
   UPDATE_PLAYER = 'UPDATE_PLAYER',
   UPDATE_TILES = 'UPDATE_TILES',
 }
+
+export type ActionData = StartGameData | AddPlayerData | UpdatePlayerData | UpdateTilesData;
+
+export interface StartGameData {
+  action: Action.START_GAME;
+  tiles: PositionMap<Tile>;
+}
+
+export interface AddPlayerData {
+  action: Action.ADD_PLAYER;
+  player: Player;
+}
+
+export interface UpdatePlayerData {
+  action: Action.UPDATE_PLAYER;
+  player: Player;
+}
+
+export interface UpdateTilesData {
+  action: Action.UPDATE_TILES;
+  tiles: PositionMap<Tile>;
+}

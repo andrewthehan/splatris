@@ -8,7 +8,14 @@
   import { PlayerController } from '$lib/game/PlayerController';
   import { createBlockBag } from '$lib/game/Tetrominoes';
   import { keyboardControl } from '$lib/input/KeyboardInput';
-  import { Action } from '$lib/network/Action';
+  import {
+    Action,
+    type ActionData,
+    type AddPlayerData,
+    type StartGameData,
+    type UpdatePlayerData,
+    type UpdateTilesData,
+  } from '$lib/network/Action';
   import { listenForConnections, listenForData, open, sendData } from '$lib/network/p2p';
   import { getTransition } from '$lib/transitions/blockToTileTransition';
   import Peer, { type DataConnection } from 'peerjs';
@@ -29,30 +36,34 @@
 
   function makeConnection(c: DataConnection) {
     connection = c;
-    listenForData(connection, handleData);
+    listenForData<ActionData>(connection, handleData);
   }
 
-  function handleData(data: any) {
-    switch (data.type) {
+  function handleData(data: ActionData) {
+    switch (data.action) {
       case Action.START_GAME:
-        tiles = data.tiles;
+        const startGameData = data as StartGameData;
+        tiles = startGameData.tiles;
+
         addPlayer(createPlayer({ hue: 0 }));
         break;
       case Action.ADD_PLAYER:
-        players.push(data.player);
+        const addPlayerData = data as AddPlayerData;
+        players.push(addPlayerData.player);
         break;
       case Action.UPDATE_PLAYER:
-        const index = players.findIndex((p) => p.id === data.player.id);
+        const updatePlayerData = data as UpdatePlayerData;
+        const index = players.findIndex((p) => p.id === updatePlayerData.player.id);
         if (index !== -1) {
-          players[index] = data.player;
+          players[index] = updatePlayerData.player;
         }
         break;
       case Action.UPDATE_TILES:
-        if (JSON.stringify(tiles) == JSON.stringify(data.tiles)) {
+        const updateTilesData = data as UpdateTilesData;
+        if (JSON.stringify(tiles) === JSON.stringify(updateTilesData.tiles)) {
           return;
         }
-
-        tiles = data.tiles;
+        tiles = updateTilesData.tiles;
         break;
     }
   }
@@ -88,8 +99,8 @@
       }
     }
 
-    sendData(connection, {
-      type: Action.START_GAME,
+    sendData<StartGameData>(connection, {
+      action: Action.START_GAME,
       tiles,
     });
   }
@@ -102,8 +113,8 @@
     controlledPlayer.offset = floor(tilesWrapper.center());
 
     players.push(controlledPlayer);
-    sendData(connection, {
-      type: Action.ADD_PLAYER,
+    sendData<AddPlayerData>(connection, {
+      action: Action.ADD_PLAYER,
       player: controlledPlayer,
     });
   }
@@ -111,8 +122,8 @@
   $effect(() => {
     if (connection == null || tiles == null) return;
 
-    sendData(connection, {
-      type: Action.UPDATE_TILES,
+    sendData<UpdateTilesData>(connection, {
+      action: Action.UPDATE_TILES,
       tiles,
     });
   });
@@ -120,8 +131,8 @@
   $effect(() => {
     if (connection == null || controlledPlayer == null) return;
 
-    sendData(connection, {
-      type: Action.UPDATE_PLAYER,
+    sendData<UpdatePlayerData>(connection, {
+      action: Action.UPDATE_PLAYER,
       player: controlledPlayer,
     });
   });

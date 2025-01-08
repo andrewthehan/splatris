@@ -12,14 +12,14 @@ export function listenForConnections(peer: Peer): Promise<DataConnection> {
   });
 }
 
-export function sendData(connection: DataConnection, data: any) {
+export function sendData<T>(connection: DataConnection, data: T) {
   console.log('Sending data:', data);
   connection.send(data);
 }
 
-export function listenForData(connection: DataConnection, dataHandler: (data: any) => void) {
+export function listenForData<T>(connection: DataConnection, dataHandler: (data: T) => void) {
   connection.on('data', (data) => {
     console.log('Received data:', data);
-    dataHandler(data);
+    dataHandler(data as T);
   });
 }
