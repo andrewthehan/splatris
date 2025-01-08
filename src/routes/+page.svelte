@@ -55,15 +55,12 @@
         const updatePlayerData = data as UpdatePlayerData;
         const index = players.findIndex((p) => p.id === updatePlayerData.player.id);
         if (index !== -1) {
-          players[index] = updatePlayerData.player;
+          Object.assign(players[index], updatePlayerData.player);
         }
         break;
       case Action.UPDATE_TILES:
         const updateTilesData = data as UpdateTilesData;
-        if (JSON.stringify(tiles) === JSON.stringify(updateTilesData.tiles)) {
-          return;
-        }
-        tiles = updateTilesData.tiles;
+        Object.assign(tiles, updateTilesData.tiles);
         break;
     }
   }
@@ -81,7 +78,24 @@
   const controller = $derived(
     controlledPlayer == null
       ? null
-      : new PlayerController(controlledPlayer, blockBag, tiles, players),
+      : new PlayerController(
+          controlledPlayer,
+          blockBag,
+          tiles,
+          players,
+          (partialPlayer) => {
+            sendData<UpdatePlayerData>(connection!!, {
+              action: Action.UPDATE_PLAYER,
+              player: partialPlayer,
+            });
+          },
+          (updatedTiles) => {
+            sendData<UpdateTilesData>(connection!!, {
+              action: Action.UPDATE_TILES,
+              tiles: updatedTiles,
+            });
+          },
+        ),
   );
 
   const tileTransition = $derived(getTransition(players));
@@ -118,24 +132,6 @@
       player: controlledPlayer,
     });
   }
-
-  $effect(() => {
-    if (connection == null || tiles == null) return;
-
-    sendData<UpdateTilesData>(connection, {
-      action: Action.UPDATE_TILES,
-      tiles,
-    });
-  });
-
-  $effect(() => {
-    if (connection == null || controlledPlayer == null) return;
-
-    sendData<UpdatePlayerData>(connection, {
-      action: Action.UPDATE_PLAYER,
-      player: controlledPlayer,
-    });
-  });
 </script>
 
 <svelte:body on:keydown={controller == null ? null : (e) => keyboardControl(e, controller)} />

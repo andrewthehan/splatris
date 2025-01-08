@@ -7,6 +7,7 @@ import { necessaryKick } from '$lib/game/Kick';
 import type { RandomBagIterator } from '$lib/game/RandomBag';
 import { rotateClockwise, rotateCounterClockwise } from '$lib/game/Rotation';
 import { TetrominoShape } from '$lib/game/Tetrominoes';
+import type { PartialPlayer } from '$lib/network/Action';
 
 export class PlayerController {
   constructor(
@@ -14,6 +15,8 @@ export class PlayerController {
     private blockBag: RandomBagIterator<TetrominoShape, Block>,
     private tiles: PositionMap<Tile>,
     private players: Player[],
+    private onPlayerChange: (player: PartialPlayer) => void,
+    private onTileChange: (tiles: PositionMap<Tile>) => void,
   ) {}
 
   private isCollision(newPositions: Position[]): boolean {
@@ -27,6 +30,7 @@ export class PlayerController {
       .map((p) => add(p, newOffset));
     if (!this.isCollision(newPositions)) {
       this.player.offset = newOffset;
+      this.onPlayerChange({ id: this.player.id, offset: this.player.offset });
     }
   }
 
@@ -51,6 +55,12 @@ export class PlayerController {
         necessaryKick(newBlock, this.player.offset, this.getValidPositions()),
       );
       this.player.block = newBlock;
+
+      this.onPlayerChange({
+        id: this.player.id,
+        offset: this.player.offset,
+        block: this.player.block,
+      });
     } catch (e) {
       console.error(e);
     }
@@ -64,24 +74,37 @@ export class PlayerController {
         necessaryKick(newBlock, this.player.offset, this.getValidPositions()),
       );
       this.player.block = newBlock;
+
+      this.onPlayerChange({
+        id: this.player.id,
+        offset: this.player.offset,
+        block: this.player.block,
+      });
     } catch (e) {
       console.error(e);
     }
   }
 
   place() {
-    new PositionMapWrapper(this.player.block.tiles)
-      .mapPositions((p) => add(p, this.player.offset))
-      .entries()
-      .forEach(([p, blockTile]) => {
-        const wrapper = new PositionMapWrapper(this.tiles);
-        const tile = wrapper.get(p)!!;
-        if (tile.ownerId === this.player.id) {
-          wrapper.set(p, { ...tile, ownerId: undefined });
-        } else {
-          wrapper.set(p, { ...tile, id: blockTile.id, ownerId: blockTile.ownerId });
-        }
-      });
+    const placedBlock = new PositionMapWrapper(this.player.block.tiles).mapPositions((p) =>
+      add(p, this.player.offset),
+    );
+    const tilesWrapper = new PositionMapWrapper(this.tiles);
+
+    const updatedTiles = placedBlock.entries().reduce((updatedTiles, entry) => {
+      const [p, blockTile] = entry;
+      const tile = tilesWrapper.get(p)!!;
+      const updatedTile =
+        tile.ownerId === this.player.id
+          ? { ...tile, ownerId: undefined }
+          : { ...tile, id: blockTile.id, ownerId: blockTile.ownerId };
+      updatedTiles.set(p, updatedTile);
+      return updatedTiles;
+    }, new PositionMapWrapper<Tile>());
+
+    updatedTiles.entries().forEach(([p, tile]) => tilesWrapper.set(p, tile));
+    this.onTileChange(updatedTiles.unwrap());
+
     while (true) {
       this.player.block = this.blockBag.next();
       let rotations = 0;
@@ -91,6 +114,11 @@ export class PlayerController {
             this.player.offset,
             necessaryKick(this.player.block, this.player.offset, this.getValidPositions()),
           );
+          this.onPlayerChange({
+            id: this.player.id,
+            offset: this.player.offset,
+            block: this.player.block,
+          });
           return;
         } catch (e) {
           this.rotateClockwise();

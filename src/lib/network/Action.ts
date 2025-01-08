@@ -21,9 +21,11 @@ export interface AddPlayerData {
   player: Player;
 }
 
+export type PartialPlayer = Pick<Player, 'id'> & Partial<Player>;
+
 export interface UpdatePlayerData {
   action: Action.UPDATE_PLAYER;
-  player: Player;
+  player: PartialPlayer;
 }
 
 export interface UpdateTilesData {
