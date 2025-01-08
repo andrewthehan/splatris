@@ -40,8 +40,12 @@
 
   .title {
     font-family: var(--title-font);
-    font-size: 3rem;
+    font-size: 4rem;
+    font-weight: bold;
     margin: 1rem;
+    background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+    background-clip: text;
+    color: transparent;
   }
 
   main {

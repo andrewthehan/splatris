@@ -8,6 +8,7 @@
   import { PlayerController } from '$lib/game/PlayerController';
   import { createBlockBag } from '$lib/game/Tetrominoes';
   import { keyboardControl } from '$lib/input/KeyboardInput';
+  import { randomInt } from '$lib/math/Random';
   import {
     Action,
     type ActionData,
@@ -23,16 +24,18 @@
   import { flip } from 'svelte/animate';
 
   const peer = $state(new Peer());
+  const peerId = $state(open(peer));
   let connection = $state<DataConnection>();
-  let peerId = $state(open(peer));
   let peerIdToConnect = $state('');
+
+  let playerHue = $state(randomInt(0, 360));
 
   onMount(() => waitForConnect());
 
   async function waitForConnect() {
     makeConnection(await listenForConnections(peer));
     startGame();
-    addPlayer(createPlayer({ hue: 240 }));
+    addPlayer(createPlayer({ hue: playerHue }));
   }
 
   function makeConnection(c: DataConnection) {
@@ -54,7 +57,7 @@
         const startGameData = data as StartGameData;
         Object.assign(tiles, startGameData.tiles);
 
-        addPlayer(createPlayer({ hue: 0 }));
+        addPlayer(createPlayer({ hue: playerHue }));
         break;
       case Action.ADD_PLAYER:
         const addPlayerData = data as AddPlayerData;
@@ -161,6 +164,11 @@
     {#await peerId}
       <p class="peer-id">Connecting...</p>
     {:then peerId}
+      <div class="color-picker">
+        <label for="hue">Choose your color:</label>
+        <input type="range" id="hue" min="0" max="360" bind:value={playerHue} />
+        <div class="color-preview" style="background-color: hsl({playerHue}, 80%, 50%)"></div>
+      </div>
       <p class="peer-id">ID: {peerId}</p>
       <input type="text" bind:value={peerIdToConnect} placeholder="Enter friend's ID to connect" />
       <button onclick={() => makeConnection(peer.connect(peerIdToConnect))}>Connect</button>
@@ -246,8 +254,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
   }
 
   .connect .peer-id {
@@ -265,5 +272,27 @@
     padding: 0.5rem 1rem;
     font-size: 1rem;
     cursor: pointer;
+  }
+
+  .color-picker {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .color-picker label {
+    margin-right: 1rem;
+  }
+
+  .color-picker input[type='range'] {
+    margin-right: 1rem;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .color-preview {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid black;
   }
 </style>
