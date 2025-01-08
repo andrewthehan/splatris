@@ -12,20 +12,12 @@ export function listenForConnections(peer: Peer): Promise<DataConnection> {
   });
 }
 
-export function sendData(connection: DataConnection | undefined, data: any) {
-  if (connection == null) {
-    throw new Error('Connection is not open');
-  }
-
+export function sendData(connection: DataConnection, data: any) {
   console.log('Sending data:', data);
   connection.send(data);
 }
 
 export function listenForData(connection: DataConnection, dataHandler: (data: any) => void) {
-  if (connection == null) {
-    throw new Error('Connection is not open');
-  }
-
   connection.on('data', (data) => {
     console.log('Received data:', data);
     dataHandler(data);

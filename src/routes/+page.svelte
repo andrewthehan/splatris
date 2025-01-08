@@ -76,6 +76,8 @@
   const tileTransition = $derived(getTransition(players));
 
   function startGame() {
+    if (connection == null) return;
+
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         const tile: Tile = {
@@ -93,6 +95,8 @@
   }
 
   function addPlayer(player: Player) {
+    if (connection == null) return;
+
     controlledPlayer = player;
     controlledPlayer.block = blockBag.next();
     controlledPlayer.offset = floor(tilesWrapper.center());
