@@ -1,13 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&family=Salsa&display=swap');
+
 :root {
   --background-color: #14161e;
   --foreground-color: mintcream;
 
   --primary-color: #facade;
+
+  --game-font: "Salsa", serif;
+  --title-font: "Gloria Hallelujah", serif;
 }
 
 * {
   /* outline: 1px solid red; */
   box-sizing: border-box;
+  font-family: var(--game-font);
 }
 
 body {

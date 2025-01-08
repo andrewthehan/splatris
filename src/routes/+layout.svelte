@@ -5,12 +5,14 @@
 </script>
 
 <svelte:head>
-  <title>Tile</title>
-  <meta name="description" content="A game." />
+  <title>Splatris</title>
+  <meta name="description" content="Fast-paced, colorful, block-dropping area control!" />
 </svelte:head>
 
 <div class="root">
-  <header></header>
+  <header>
+    <h1 class="title">Splatris</h1>
+  </header>
 
   <main>
     <div class="main-content">
@@ -30,9 +32,16 @@
   header {
     display: flex;
     align-items: center;
+    justify-content: center;
 
     width: 768px;
     max-width: 90%;
+  }
+
+  .title {
+    font-family: var(--title-font);
+    font-size: 3rem;
+    margin: 1rem;
   }
 
   main {
