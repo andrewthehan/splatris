@@ -16,7 +16,7 @@ export class PlayerController {
     private tiles: PositionMap<Tile>,
     private players: Player[],
     private onPlayerChange: (player: PartialPlayer) => void,
-    private onTileChange: (tiles: PositionMap<Tile>) => void,
+    private onTileChange: (tileChanges: PositionMap<{ oldTile: Tile; newTile: Tile }>) => void,
   ) {}
 
   private isCollision(newPositions: Position[]): boolean {
@@ -91,19 +91,17 @@ export class PlayerController {
     );
     const tilesWrapper = new PositionMapWrapper(this.tiles);
 
-    const updatedTiles = placedBlock.entries().reduce((updatedTiles, entry) => {
-      const [p, blockTile] = entry;
-      const tile = tilesWrapper.get(p)!!;
-      const updatedTile =
-        tile.ownerId === this.player.id
-          ? { ...tile, ownerId: undefined }
-          : { ...tile, id: blockTile.id, ownerId: blockTile.ownerId };
-      updatedTiles.set(p, updatedTile);
-      return updatedTiles;
-    }, new PositionMapWrapper<Tile>());
+    const tileChanges = placedBlock.mapObjects((p, blockTile) => {
+      const oldTile = tilesWrapper.get(p)!!;
+      const newTile =
+        oldTile.ownerId === this.player.id
+          ? { ...oldTile, ownerId: undefined }
+          : { ...oldTile, id: blockTile.id, ownerId: blockTile.ownerId };
+      return { oldTile, newTile };
+    });
 
-    updatedTiles.entries().forEach(([p, tile]) => tilesWrapper.set(p, tile));
-    this.onTileChange(updatedTiles.unwrap());
+    tileChanges.entries().forEach(([p, { oldTile, newTile }]) => tilesWrapper.set(p, newTile));
+    this.onTileChange(tileChanges.unwrap());
 
     while (true) {
       this.player.block = this.blockBag.next();

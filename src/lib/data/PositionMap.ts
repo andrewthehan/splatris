@@ -93,6 +93,12 @@ export class PositionMapWrapper<T> {
     return map;
   }
 
+  mapObjects<U>(block: (p: Position, obj: T) => U): PositionMapWrapper<U> {
+    const map = new PositionMapWrapper<U>();
+    this.entries().forEach(([p, obj]) => map.set(p, block(p, obj)));
+    return map;
+  }
+
   clone(): PositionMapWrapper<T> {
     return this.mapPositions((p) => p);
   }

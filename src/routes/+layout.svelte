@@ -34,7 +34,7 @@
     align-items: center;
     justify-content: center;
 
-    width: 768px;
+    width: 1080px;
     max-width: 90%;
   }
 
@@ -63,7 +63,7 @@
     display: flex;
     flex-direction: column;
 
-    width: 768px;
+    width: 1080px;
     max-width: 90%;
 
     height: 100%;

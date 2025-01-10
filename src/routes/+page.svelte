@@ -116,7 +116,9 @@
           (updatedTiles) => {
             sendData<UpdateTilesData>(connection!!, {
               action: Action.UPDATE_TILES,
-              tiles: updatedTiles,
+              tiles: new PositionMapWrapper(updatedTiles)
+                .mapObjects((position, { oldTile, newTile }) => newTile)
+                .unwrap(),
             });
           },
         ),
@@ -187,7 +189,7 @@
 
 <svelte:body on:keydown={handleKeyDown} on:keyup={handleKeyUp} />
 
-{#if connection == null}
+{#if connection == null || controlledPlayer == null}
   <section class="connect">
     {#await peerId}
       <p class="peer-id">Connecting...</p>
@@ -208,13 +210,15 @@
   </section>
 {:else}
   <section class="container">
-    <section class="scoreboard">
-      {#each playerScores as { player, score } (player.id)}
-        <div class="score" animate:flip>
-          <span class="player" style="color: hsl({player.hue}, 80%, 50%)">{player.name}</span>: {score}
-          ({((score / totalTiles) * 100).toFixed(2)}%)
-        </div>
-      {/each}
+    <section class="side-panel">
+      <section class="scoreboard">
+        {#each playerScores as { player, score } (player.id)}
+          <div class="score" animate:flip>
+            <span class="player" style:color="hsl({player.hue}, 80%, 50%)">{player.name}</span>: {score}
+            ({((score / totalTiles) * 100).toFixed(2)}%)
+          </div>
+        {/each}
+      </section>
     </section>
     <section class="grid">
       <CenterContainer positions={tilesWrapper.positions()} size={cellSize}>
@@ -265,8 +269,14 @@
   .container {
     flex: 1;
     display: flex;
-    flex-flow: column;
+    flex-flow: row;
     justify-content: center;
+    align-items: stretch;
+  }
+
+  .side-panel {
+    display: flex;
+    flex-flow: column;
     align-items: stretch;
   }
 
@@ -276,13 +286,14 @@
 
   .scoreboard {
     display: flex;
-    flex-direction: column;
+    flex-flow: column;
     align-items: center;
     margin: 1rem;
+    width: 256px;
   }
 
   .score {
-    font-size: 1.2rem;
+    font-size: 1rem;
     margin-bottom: 0.5rem;
   }
 
@@ -293,7 +304,7 @@
   .connect {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-flow: column;
     align-items: stretch;
   }
 
@@ -365,7 +376,7 @@
     border-radius: 0.5rem;
 
     display: flex;
-    flex-direction: column;
+    flex-flow: column;
     align-items: center;
   }
 
