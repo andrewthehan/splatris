@@ -1,8 +1,8 @@
 import { add, divide, newPosition, ORIGIN, type Position } from '../data/Position';
-import { Size } from './Size';
+import { EMPTY, type Size } from './Size';
 
 export class BoundingBox {
-  private static readonly EMPTY = new BoundingBox(ORIGIN, Size.EMPTY);
+  private static readonly EMPTY = new BoundingBox(ORIGIN, EMPTY);
 
   constructor(
     readonly origin: Position,
@@ -21,7 +21,7 @@ export class BoundingBox {
     const width = Math.max(...xs) - minX + 1;
     const height = Math.max(...ys) - minY + 1;
 
-    return new BoundingBox(newPosition(minX, minY), new Size(width, height));
+    return new BoundingBox(newPosition(minX, minY), { width, height });
   }
 
   get center(): Position {
