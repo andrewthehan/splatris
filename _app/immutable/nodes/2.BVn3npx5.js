@@ -1,0 +1,1 @@
+import{a as t,t as e}from"../chunks/disclose-version.BiMpZnrq.js";import"../chunks/legacy.Cgv2iBwf.js";var p=e('<section class="container svelte-1i548my"><p>Fast-paced, colorful, block-dropping area control!</p> <a href="/play">Play</a></section>');function c(a){var o=p();t(a,o)}export{c as component};
