@@ -5,7 +5,7 @@ import type { Block } from '../data/Block';
 
 function performRotation<T>(
   block: Block,
-  rotateFn: (position: Position, pivot: Position) => Position,
+  rotateFn: (position: Position, pivot: Position) => Position
 ): Block {
   const blockWrapper = new PositionMapWrapper(block.tiles);
   const pivot = blockWrapper.center();
@@ -17,7 +17,7 @@ function performRotation<T>(
 
 function adjustForNonIntegerPivot(
   position: Position,
-  size: { width: number; height: number },
+  size: { width: number; height: number }
 ): Position {
   const rounded = floor(position);
   if (size.width % 2 !== size.height % 2) {

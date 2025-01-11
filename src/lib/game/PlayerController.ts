@@ -1,4 +1,5 @@
 import type { Block } from '$lib/data/Block';
+import type { PartialWithId } from '$lib/data/PartialWithId';
 import { type Player } from '$lib/data/Player';
 import { add, type Position } from '$lib/data/Position';
 import { PositionMapWrapper, type PositionMap } from '$lib/data/PositionMap';
@@ -7,16 +8,15 @@ import { necessaryKick } from '$lib/game/Kick';
 import type { RandomBagIterator } from '$lib/game/RandomBag';
 import { rotateClockwise, rotateCounterClockwise } from '$lib/game/Rotation';
 import { TetrominoShape } from '$lib/game/Tetrominoes';
-import type { PartialPlayer } from '$lib/network/Action';
 
 export class PlayerController {
   constructor(
     public player: Player,
     private blockBag: RandomBagIterator<TetrominoShape, Block>,
     private tiles: PositionMap<Tile>,
-    private players: Player[],
-    private onPlayerChange: (player: PartialPlayer) => void,
-    private onTileChange: (tileChanges: PositionMap<{ oldTile: Tile; newTile: Tile }>) => void,
+    private otherPlayers: Player[],
+    private onPlayerChange: (player: PartialWithId<Player>) => void,
+    private onTileChange: (tileChanges: PositionMap<{ oldTile: Tile; newTile: Tile }>) => void
   ) {}
 
   private isCollision(newPositions: Position[]): boolean {
@@ -36,12 +36,11 @@ export class PlayerController {
 
   getValidPositions(): PositionMapWrapper<{}> {
     const validPositions = new PositionMapWrapper(this.tiles).clone();
-    this.players
-      .filter((p) => p.id !== this.player.id)
+    this.otherPlayers
       .flatMap((player) =>
         new PositionMapWrapper(player.block.tiles)
           .positions()
-          .map((position) => add(position, player.offset)),
+          .map((position) => add(position, player.offset))
       )
       .forEach((p) => validPositions.delete(p));
     return validPositions;
@@ -52,7 +51,7 @@ export class PlayerController {
     try {
       this.player.offset = add(
         this.player.offset,
-        necessaryKick(newBlock, this.player.offset, this.getValidPositions()),
+        necessaryKick(newBlock, this.player.offset, this.getValidPositions())
       );
       this.player.block = newBlock;
 
@@ -71,7 +70,7 @@ export class PlayerController {
     try {
       this.player.offset = add(
         this.player.offset,
-        necessaryKick(newBlock, this.player.offset, this.getValidPositions()),
+        necessaryKick(newBlock, this.player.offset, this.getValidPositions())
       );
       this.player.block = newBlock;
 
@@ -87,7 +86,7 @@ export class PlayerController {
 
   place() {
     const placedBlock = new PositionMapWrapper(this.player.block.tiles).mapPositions((p) =>
-      add(p, this.player.offset),
+      add(p, this.player.offset)
     );
     const tilesWrapper = new PositionMapWrapper(this.tiles);
 
@@ -110,7 +109,7 @@ export class PlayerController {
         try {
           this.player.offset = add(
             this.player.offset,
-            necessaryKick(this.player.block, this.player.offset, this.getValidPositions()),
+            necessaryKick(this.player.block, this.player.offset, this.getValidPositions())
           );
           this.onPlayerChange({
             id: this.player.id,

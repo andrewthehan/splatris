@@ -1,23 +1,23 @@
 import { ORIGIN, type Position } from '$lib/data/Position';
-import { v4 as uuidv4 } from 'uuid';
 import type { Block } from './Block';
+import type { Identifiable } from './Identifiable';
 
-export type Player = {
-  id: string;
-
+export type Player = Identifiable & {
   name: string;
   hue: number;
 
+  isLobbyAdmin: boolean;
+  isReady: boolean;
   block: Block;
   offset: Position;
 };
 
 export function createPlayer(
-  configurableFields: Omit<Omit<Omit<Player, 'id'>, 'block'>, 'offset'>,
+  configurableFields: Omit<Omit<Omit<Player, 'block'>, 'offset'>, 'isReady'>
 ): Player {
   return {
     ...configurableFields,
-    id: uuidv4(),
+    isReady: false,
     block: { tiles: {} },
     offset: ORIGIN,
   };

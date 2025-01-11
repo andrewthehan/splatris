@@ -12,7 +12,7 @@ export function getTransition(players: Player[]) {
         players.some((player) =>
           new PositionMapWrapper(player.block.tiles)
             .values()
-            .some((blockTile) => blockTile.id === (params as any).key),
+            .some((blockTile) => blockTile.id === (params as any).key)
         )
       ) {
         return {

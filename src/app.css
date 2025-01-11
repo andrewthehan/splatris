@@ -4,10 +4,8 @@
   --background-color: #14161e;
   --foreground-color: mintcream;
 
-  --primary-color: #facade;
-
-  --game-font: "Salsa", serif;
-  --title-font: "Gloria Hallelujah", serif;
+  --game-font: 'Salsa', serif;
+  --title-font: 'Gloria Hallelujah', serif;
 }
 
 * {
@@ -27,5 +25,7 @@ a {
 }
 
 a:hover {
-  color: var(--primary-color);
+  background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+  background-clip: text;
+  color: transparent;
 }

@@ -25,7 +25,7 @@ export function rollByParts<T>(events: { result: T; part: number }[]): T {
     events.map((event) => ({
       result: event.result,
       probability: event.part / totalParts,
-    })),
+    }))
   );
 }
 

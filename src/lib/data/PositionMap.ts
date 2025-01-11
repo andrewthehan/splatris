@@ -99,6 +99,16 @@ export class PositionMapWrapper<T> {
     return map;
   }
 
+  filter(block: (p: Position, obj: T) => boolean): PositionMapWrapper<T> {
+    const map = new PositionMapWrapper<T>();
+    this.entries().forEach(([p, obj]) => {
+      if (block(p, obj)) {
+        map.set(p, obj);
+      }
+    });
+    return map;
+  }
+
   clone(): PositionMapWrapper<T> {
     return this.mapPositions((p) => p);
   }

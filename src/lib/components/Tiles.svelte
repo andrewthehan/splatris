@@ -32,7 +32,7 @@
   const sortedTiles = $derived(
     tilesWrapper
       .entries()
-      .toSorted(([positionA, tileA], [positionB, tileB]) => tileA.id.localeCompare(tileB.id)),
+      .toSorted(([positionA, tileA], [positionB, tileB]) => tileA.id.localeCompare(tileB.id))
   );
 </script>
 

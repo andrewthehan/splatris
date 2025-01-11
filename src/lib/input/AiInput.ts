@@ -6,14 +6,14 @@ import { add, distanceTo, DOWN, LEFT, ORIGIN, RIGHT, UP, type Position } from '.
 
 function findClosestPosition(
   positions: Position[],
-  haystack: Position[],
+  haystack: Position[]
 ): { position: Position; distance: number } {
   return haystack.reduce(
     (closest, position) => {
       const distance = Math.min(...positions.map((p) => distanceTo(p, position)));
       return distance < closest.distance ? { position, distance } : closest;
     },
-    { position: ORIGIN, distance: Infinity },
+    { position: ORIGIN, distance: Infinity }
   );
 }
 
@@ -57,17 +57,17 @@ export function startAi(controller: PlayerController, tiles: PositionMapWrapper<
     if (targetPositions.length > 0) {
       const { position: closestTarget } = findClosestPosition(
         controller.getPositions(),
-        targetPositions,
+        targetPositions
       );
       const targetDirection = directions.reduce(
         (closest, direction) => {
           const { distance } = findClosestPosition(
             [closestTarget],
-            controller.getPositions().map((p) => add(p, direction)),
+            controller.getPositions().map((p) => add(p, direction))
           );
           return distance < closest.distance ? { direction, distance } : closest;
         },
-        { direction: ORIGIN, distance: Infinity },
+        { direction: ORIGIN, distance: Infinity }
       ).direction;
 
       controller.move(targetDirection);

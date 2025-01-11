@@ -30,16 +30,16 @@ export const Tetrominoes: Record<TetrominoShape, Position[]> = {
   [TetrominoShape.Z]: [newPosition(-1, 1), newPosition(0, 1), newPosition(0, 0), newPosition(1, 0)],
 };
 
-export function createBlockBag(owner: Player | null) {
+export function createBlockBag(owner: Player) {
   return new RandomBagIterator<TetrominoShape, Block>(
     Object.values(TetrominoShape) as TetrominoShape[],
     (shape) => ({
       tiles: Tetrominoes[shape]
         .reduce(
           (map, position, i) => map.set(position, createTile({ ownerId: owner?.id })),
-          new PositionMapWrapper<Tile>(),
+          new PositionMapWrapper<Tile>()
         )
         .unwrap(),
-    }),
+    })
   );
 }

@@ -22,8 +22,8 @@
   const centerOffset = $derived(
     subtract(
       divide(divide(newPosition(containerSize.width, containerSize.height), size), 2),
-      box.center,
-    ),
+      box.center
+    )
   );
 
   $effect(() => {

@@ -6,7 +6,7 @@ export class BoundingBox {
 
   constructor(
     readonly origin: Position,
-    readonly size: Size,
+    readonly size: Size
   ) {}
 
   static fromPositions(positions: Position[]): BoundingBox {

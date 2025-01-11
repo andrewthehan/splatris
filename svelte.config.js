@@ -9,9 +9,9 @@ const config = {
 
   kit: {
     adapter: adapter({
-      fallback: '404.html'
-    })
-  }
+      fallback: '404.html',
+    }),
+  },
 };
 
 export default config;

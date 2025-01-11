@@ -11,7 +11,7 @@
 
 <div class="root">
   <header>
-    <h1 class="title">Splatris</h1>
+    <a class="title" href="/">Splatris</a>
   </header>
 
   <main>
@@ -34,7 +34,7 @@
     align-items: center;
     justify-content: center;
 
-    width: 1080px;
+    width: 768px;
     max-width: 90%;
   }
 
@@ -63,7 +63,7 @@
     display: flex;
     flex-direction: column;
 
-    width: 1080px;
+    width: 768px;
     max-width: 90%;
 
     height: 100%;

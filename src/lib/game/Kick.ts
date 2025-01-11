@@ -8,7 +8,7 @@ export function necessaryKick<T>(
   block: Block,
   offset: Position,
   validPositions: PositionMapWrapper<T>,
-  maxDistance = 4,
+  maxDistance = 4
 ): Position {
   const blockTiles = new PositionMapWrapper(block.tiles);
 
